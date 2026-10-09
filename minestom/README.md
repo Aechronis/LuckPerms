@@ -5,6 +5,26 @@ and Java 25. The `master` branch follows upstream LuckPerms and preserves the
 builder, configuration, command registration, and context provider APIs from
 [Javaniac's Minestom fork](https://codeberg.org/Javaniac/LuckPerms).
 
+## Dependency
+
+Use `mavenCentral()` and select a published `luckperms-minestom` version:
+
+```kotlin
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("net.minestom:minestom:2026.10.05-26.2")
+    implementation("net.aechronis:luckperms-minestom:<version>")
+}
+```
+
+Versions follow the same format as Aechronis' Grim fork:
+`<upstream LuckPerms version>-minestom.<counter>`, for example
+`5.5.87-minestom.1`, `5.5.87-minestom.2`. The counter resets when the upstream
+base version changes. MiniMessage is included as a Maven dependency.
+
 ## Build
 
 ```sh
@@ -19,7 +39,8 @@ jar directly, also add `net.kyori:adventure-text-minimessage:5.2.0`.
 For a local Maven dependency:
 
 ```sh
-./gradlew -PminestomOnly -PminestomVersion=5.5-minestom-local :minestom:publishToMavenLocal
+./gradlew -PminestomOnly -PunsignedLocalPublication=true \
+    -PminestomVersion=5.5.87-minestom-local :minestom:publishToMavenLocal
 ```
 
 ```kotlin
@@ -30,11 +51,9 @@ repositories {
 
 dependencies {
     implementation("net.minestom:minestom:2026.10.05-26.2")
-    implementation("net.aechronis:luckperms-minestom:5.5-minestom-local")
+    implementation("net.aechronis:luckperms-minestom:5.5.87-minestom-local")
 }
 ```
-
-These are local build instructions; this fork has not been published to Maven Central.
 
 ## Use
 
@@ -86,6 +105,39 @@ JDBC driver for remote SQL, or Jedis for Redis).
 Legacy flat-file storage backends also require their Configurate 3 dependencies;
 the included Configurate 4 adapter handles the library's configuration file.
 
+## Publishing
+
+The `Minestom Maven Central` GitHub Actions workflow verifies and publishes on
+pushes to `master`. Pull requests only verify. A manual run can publish by
+selecting `publish`; no version input is needed.
+
+Configure these repository Actions secrets with the Central Portal credentials
+and signing key authorized for `net.aechronis`:
+
+- `MAVEN_CENTRAL_USERNAME`
+- `MAVEN_CENTRAL_PASSWORD`
+- `MAVEN_SIGNING_KEY` (ASCII-armored private key)
+- `MAVEN_SIGNING_PASSWORD`
+
+The workflow checks Maven Central and reserved Git tags to select the next
+counter, runs the tests, and checks a local Maven publication. It reserves the
+version tag before uploading signed artifacts. Failed uploads retain that tag;
+use **Re-run all jobs** or another push to select the next number. Re-running
+only the failed publish job safely rejects the already reserved version.
+
+To verify a publication locally without uploading or installing it:
+
+```sh
+version=$(python3 minestom/next-version.py)
+./gradlew -PminestomOnly -PunsignedLocalPublication=true \
+    "-PminestomVersion=$version" :common:test :minestom:build \
+    :minestom:publishAllPublicationsToLocalBuildRepository
+python3 minestom/verify-publication.py minestom/build/repository "$version"
+```
+
+Unsigned publication is restricted to local verification. Normal Central
+publication signs the main jar, sources, Javadoc, POM, and Gradle metadata.
+
 ## Upstream and attribution
 
 This is an unofficial Minestom integration, licensed under LuckPerms' MIT license.
@@ -98,3 +150,5 @@ small project set needed for this library; omit it for the upstream project set.
 To bring in upstream changes, merge `LuckPerms/LuckPerms`'s `master` into this
 fork's `master` branch and rerun the build above. Integration checks run against
 both the normal classpath and the packaged jar with the target Minestom version.
+Update `baseVersion` in `minestom/build.gradle` when adopting a new upstream
+LuckPerms version; Minestom-only changes leave it unchanged.

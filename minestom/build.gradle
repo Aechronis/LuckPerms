@@ -3,10 +3,15 @@ import org.apache.tools.ant.filters.ReplaceTokens
 plugins {
     id 'java-library'
     alias(libs.plugins.shadow)
+    id 'com.vanniktech.maven.publish.base' version '0.37.0'
 }
 
+// Upstream LuckPerms at 5fc3d583c; fork commits increment the Minestom counter only.
+def baseVersion = '5.5.87'
 group = 'net.aechronis'
-version = providers.gradleProperty('minestomVersion').getOrElse("${project.ext.fullVersion}-minestom-SNAPSHOT")
+version = providers.gradleProperty('minestomVersion').getOrElse("${baseVersion}-minestom-SNAPSHOT")
+def unsignedLocalPublication = providers.gradleProperty('unsignedLocalPublication')
+        .map { it.toBoolean() }.getOrElse(false)
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(25)
@@ -92,6 +97,15 @@ shadowJar {
     relocate 'okio', 'me.lucko.luckperms.lib.okio'
 }
 
+// Include the source of each LuckPerms project embedded in the distributed jar.
+evaluationDependsOn(':common')
+tasks.named('sourcesJar', Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from project(':api').sourceSets.main.allSource
+    from project(':common').sourceSets.main.allSource
+    from project(':common:loader-utils').sourceSets.main.allSource
+}
+
 // Run the same integration checks with only the distributed jar and host libraries.
 tasks.register('shadedTest', Test) {
     dependsOn tasks.shadowJar, tasks.testClasses
@@ -117,12 +131,52 @@ publishing {
                     license {
                         name = 'MIT'
                         url = 'https://opensource.org/licenses/MIT'
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'Aechronis'
+                        name = 'Aechronis'
+                        url = 'https://github.com/Aechronis'
+                    }
+                    developer {
+                        id = 'lucko'
+                        name = 'Luck and LuckPerms contributors'
+                        url = 'https://github.com/LuckPerms'
                     }
                 }
                 scm {
                     connection = 'scm:git:https://github.com/Aechronis/LuckPerms.git'
+                    developerConnection = 'scm:git:ssh://git@github.com/Aechronis/LuckPerms.git'
                     url = 'https://github.com/Aechronis/LuckPerms'
                 }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'localBuild'
+            url = layout.buildDirectory.dir('repository')
+        }
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    if (!unsignedLocalPublication) {
+        signAllPublications()
+    }
+}
+
+tasks.withType(PublishToMavenRepository).configureEach {
+    doFirst {
+        if (repository.name == 'mavenCentral') {
+            if (unsignedLocalPublication) {
+                throw new GradleException('Unsigned publication is supported only for local verification')
+            }
+            if (!(project.version.toString() ==~ /\d+\.\d+\.\d+-minestom\.[1-9]\d*/)) {
+                throw new GradleException('Central publication requires a version selected by minestom/next-version.py')
             }
         }
     }
