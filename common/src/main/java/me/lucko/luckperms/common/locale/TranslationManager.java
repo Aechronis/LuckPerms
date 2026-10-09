@@ -31,9 +31,8 @@ import me.lucko.luckperms.common.util.MoreFiles;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.translation.GlobalTranslator;
-import net.kyori.adventure.translation.TranslationRegistry;
+import net.kyori.adventure.translation.TranslationStore;
 import net.kyori.adventure.translation.Translator;
-import net.kyori.adventure.util.UTF8ResourceBundleControl;
 import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -41,6 +40,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +59,7 @@ public class TranslationManager {
 
     private final LuckPermsPlugin plugin;
     private final Set<Locale> installed = ConcurrentHashMap.newKeySet();
-    private TranslationRegistry registry;
+    private TranslationStore.StringBased<MessageFormat> registry;
 
     private final Path translationsDirectory;
     private final Path repositoryTranslationsDirectory;
@@ -103,7 +103,7 @@ public class TranslationManager {
         }
 
         // create a translation registry
-        this.registry = TranslationRegistry.create(Key.key("luckperms", "main"));
+        this.registry = TranslationStore.messageFormat(Key.key("luckperms", "main"));
         this.registry.defaultLocale(DEFAULT_LOCALE);
 
         // load custom translations first, then the base (built-in) translations after.
@@ -119,7 +119,7 @@ public class TranslationManager {
      * Loads the base (English) translations from the jar file.
      */
     private void loadFromResourceBundle() {
-        ResourceBundle bundle = ResourceBundle.getBundle("luckperms", DEFAULT_LOCALE, UTF8ResourceBundleControl.get());
+        ResourceBundle bundle = ResourceBundle.getBundle("luckperms", DEFAULT_LOCALE);
         try {
             this.registry.registerAll(DEFAULT_LOCALE, bundle, false);
         } catch (IllegalArgumentException e) {

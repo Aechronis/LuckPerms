@@ -23,27 +23,24 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.common.locale;
+package me.lucko.luckperms.minestom.init;
 
-import org.junit.jupiter.api.Test;
+import me.lucko.luckperms.minestom.context.ContextProvider;
+import net.minestom.server.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.Set;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+public final class DummyContextProvider implements ContextProvider {
 
-public class TranslationTest {
+    @Override
+    public @NotNull String key() {
+        return "dummy";
+    }
 
-    @Test
-    public void testBundleParse() {
-        ResourceBundle bundle = ResourceBundle.getBundle("luckperms", Locale.ENGLISH);
-        Set<String> keys = bundle.keySet();
-        assertTrue(keys.size() > 100);
-
-        for (String key : keys) {
-            assertTrue(key.startsWith("luckperms."), "key " + key + " should start with 'luckperms.'");
-        }
+    @Override
+    public @NotNull Optional<String> query(@NotNull Player subject) {
+        return Optional.of("true");
     }
 
 }

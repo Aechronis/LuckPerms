@@ -1,0 +1,129 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+    id 'java-library'
+    alias(libs.plugins.shadow)
+}
+
+group = 'net.aechronis'
+version = providers.gradleProperty('minestomVersion').getOrElse("${project.ext.fullVersion}-minestom-SNAPSHOT")
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+}
+
+def minestomDependency = 'net.minestom:minestom:2026.10.05-26.2'
+
+configurations {
+    smokeRuntime
+}
+
+dependencies {
+    api(project(':common')) {
+        exclude group: 'org.spongepowered'
+        exclude group: 'me.lucko.configurate'
+        exclude group: 'net.kyori', module: 'adventure-api'
+        exclude group: 'net.kyori', module: 'adventure-text-serializer-gson'
+        exclude group: 'net.kyori', module: 'adventure-text-serializer-legacy'
+        exclude group: 'net.kyori', module: 'adventure-text-serializer-plain'
+        exclude group: 'net.kyori', module: 'adventure-text-minimessage'
+    }
+    implementation project(':common:loader-utils')
+    api 'org.spongepowered:configurate-hocon:4.2.0'
+    implementation 'me.lucko:commodore:2.0'
+    implementation 'com.google.guava:guava:33.6.0-jre'
+    implementation 'com.google.code.gson:gson:2.14.0'
+    // The default embedded storage works without downloading libraries at runtime.
+    runtimeOnly 'com.h2database:h2:2.1.214'
+
+    compileOnly minestomDependency
+    compileOnly 'net.kyori:adventure-text-minimessage:5.2.0'
+    compileOnly 'org.slf4j:slf4j-api:2.0.20'
+    compileOnly 'org.jetbrains:annotations:26.1.0'
+
+    testImplementation minestomDependency
+    testImplementation 'net.kyori:adventure-text-minimessage:5.2.0'
+    testImplementation 'ch.qos.logback:logback-classic:1.5.18'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.13.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    smokeRuntime minestomDependency
+    smokeRuntime 'net.kyori:adventure-text-minimessage:5.2.0'
+    smokeRuntime 'ch.qos.logback:logback-classic:1.5.18'
+    smokeRuntime 'org.junit.jupiter:junit-jupiter:5.13.0'
+    smokeRuntime 'org.junit.platform:junit-platform-launcher:1.13.0'
+}
+
+// Adventure types cross the API boundary and must be supplied by the host.
+// MiniMessage is not a Minestom dependency, so expose it alongside the shaded jar.
+configurations.shadow.dependencies.add(dependencies.create('net.kyori:adventure-text-minimessage:5.2.0'))
+
+tasks.register('processSource', Sync) {
+    from sourceSets.main.java
+    filter(ReplaceTokens, tokens: [VERSION: project.version.toString()])
+    into layout.buildDirectory.dir('src')
+}
+
+compileJava {
+    source = processSource.outputs
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    archiveClassifier = 'plain'
+}
+
+shadowJar {
+    archiveBaseName = 'luckperms-minestom'
+    archiveClassifier = ''
+    mergeServiceFiles()
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
+    relocate 'com.google.gson', 'me.lucko.luckperms.lib.gson'
+    relocate 'okhttp3', 'me.lucko.luckperms.lib.okhttp3'
+    relocate 'okio', 'me.lucko.luckperms.lib.okio'
+}
+
+// Run the same integration checks with only the distributed jar and host libraries.
+tasks.register('shadedTest', Test) {
+    dependsOn tasks.shadowJar, tasks.testClasses
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.output + files(tasks.shadowJar) + configurations.smokeRuntime
+    useJUnitPlatform()
+}
+
+check.dependsOn tasks.shadedTest
+
+publishing {
+    publications {
+        minestom(MavenPublication) {
+            artifactId = 'luckperms-minestom'
+            from components.shadow
+            artifact tasks.sourcesJar
+            artifact tasks.javadocJar
+            pom {
+                name = 'LuckPerms Minestom'
+                description = 'Embedded LuckPerms for Minestom 2026.10.05-26.2.'
+                url = 'https://github.com/Aechronis/LuckPerms'
+                licenses {
+                    license {
+                        name = 'MIT'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/Aechronis/LuckPerms.git'
+                    url = 'https://github.com/Aechronis/LuckPerms'
+                }
+            }
+        }
+    }
+}

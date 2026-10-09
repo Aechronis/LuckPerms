@@ -23,27 +23,27 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.common.locale;
+package me.lucko.luckperms.minestom.init;
 
-import org.junit.jupiter.api.Test;
+import me.lucko.luckperms.common.config.generic.adapter.ConfigurationAdapter;
+import me.lucko.luckperms.common.plugin.LuckPermsPlugin;
+import me.lucko.luckperms.minestom.LPMinestomPlugin;
+import org.jetbrains.annotations.NotNull;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
+import org.spongepowered.configurate.loader.ConfigurationLoader;
 
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.Set;
+import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+public final class HoconConfigurationAdapter extends ModernConfigurateConfigAdapter implements ConfigurationAdapter {
 
-public class TranslationTest {
+    public HoconConfigurationAdapter(LuckPermsPlugin plugin) {
+        super(plugin, ((LPMinestomPlugin) plugin).resolveConfig("luckperms.conf"));
+    }
 
-    @Test
-    public void testBundleParse() {
-        ResourceBundle bundle = ResourceBundle.getBundle("luckperms", Locale.ENGLISH);
-        Set<String> keys = bundle.keySet();
-        assertTrue(keys.size() > 100);
-
-        for (String key : keys) {
-            assertTrue(key.startsWith("luckperms."), "key " + key + " should start with 'luckperms.'");
-        }
+    @Override
+    protected ConfigurationLoader<? extends @NotNull ConfigurationNode> createLoader(Path path) {
+        return HoconConfigurationLoader.builder().path(path).build();
     }
 
 }

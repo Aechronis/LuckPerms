@@ -23,27 +23,23 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.common.locale;
+package me.lucko.luckperms.minestom.dependencies;
 
-import org.junit.jupiter.api.Test;
+import java.nio.file.Path;
+import me.lucko.luckperms.common.plugin.classpath.ClassPathAppender;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.Set;
+public final class NoopClassPathAppender implements ClassPathAppender {
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+    public static final @NotNull NoopClassPathAppender INSTANCE = new NoopClassPathAppender();
 
-public class TranslationTest {
+    private NoopClassPathAppender() {
 
-    @Test
-    public void testBundleParse() {
-        ResourceBundle bundle = ResourceBundle.getBundle("luckperms", Locale.ENGLISH);
-        Set<String> keys = bundle.keySet();
-        assertTrue(keys.size() > 100);
+    }
 
-        for (String key : keys) {
-            assertTrue(key.startsWith("luckperms."), "key " + key + " should start with 'luckperms.'");
-        }
+    @Override
+    public void addJarToClasspath(Path file) {
+        // no-op
     }
 
 }

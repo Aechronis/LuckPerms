@@ -23,27 +23,30 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.common.locale;
+package me.lucko.luckperms.minestom.context;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
+import net.minestom.server.entity.Player;
+import net.minestom.server.event.Event;
+import net.minestom.server.event.EventNode;
+import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+public interface ContextProvider {
 
-public class TranslationTest {
+    @NotNull String key();
 
-    @Test
-    public void testBundleParse() {
-        ResourceBundle bundle = ResourceBundle.getBundle("luckperms", Locale.ENGLISH);
-        Set<String> keys = bundle.keySet();
-        assertTrue(keys.size() > 100);
+    @NotNull Optional<String> query(@NotNull Player subject);
 
-        for (String key : keys) {
-            assertTrue(key.startsWith("luckperms."), "key " + key + " should start with 'luckperms.'");
-        }
+    default @NotNull Set<String> potentialValues() {
+        return Set.of();
+    }
+
+    default void register(@NonNull Consumer<Player> contextUpdateSignaller, @NonNull EventNode<Event> eventNode) {
+        // do nothing by default
     }
 
 }
+

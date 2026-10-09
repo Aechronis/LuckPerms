@@ -23,27 +23,21 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.common.locale;
+package me.lucko.luckperms.minestom;
 
-import org.junit.jupiter.api.Test;
+import me.lucko.luckperms.common.api.LuckPermsApiProvider;
+import me.lucko.luckperms.common.event.AbstractEventBus;
+import me.lucko.luckperms.common.plugin.LuckPermsPlugin;
 
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.Set;
+public final class MinestomEventBus extends AbstractEventBus<Object> {
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+    public MinestomEventBus(LuckPermsPlugin plugin, LuckPermsApiProvider apiProvider) {
+        super(plugin, apiProvider);
+    }
 
-public class TranslationTest {
-
-    @Test
-    public void testBundleParse() {
-        ResourceBundle bundle = ResourceBundle.getBundle("luckperms", Locale.ENGLISH);
-        Set<String> keys = bundle.keySet();
-        assertTrue(keys.size() > 100);
-
-        for (String key : keys) {
-            assertTrue(key.startsWith("luckperms."), "key " + key + " should start with 'luckperms.'");
-        }
+    @Override
+    protected Object checkPlugin(Object plugin) throws IllegalArgumentException {
+        return plugin;
     }
 
 }

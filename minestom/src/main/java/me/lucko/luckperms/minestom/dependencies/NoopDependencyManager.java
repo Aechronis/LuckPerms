@@ -23,27 +23,40 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.common.locale;
+package me.lucko.luckperms.minestom.dependencies;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.Set;
+import me.lucko.luckperms.common.dependencies.Dependency;
+import me.lucko.luckperms.common.dependencies.DependencyManager;
+import me.lucko.luckperms.common.storage.StorageType;
+import org.jetbrains.annotations.NotNull;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+public final class NoopDependencyManager implements DependencyManager {
 
-public class TranslationTest {
+    public static final @NotNull NoopDependencyManager INSTANCE = new NoopDependencyManager();
 
-    @Test
-    public void testBundleParse() {
-        ResourceBundle bundle = ResourceBundle.getBundle("luckperms", Locale.ENGLISH);
-        Set<String> keys = bundle.keySet();
-        assertTrue(keys.size() > 100);
+    private NoopDependencyManager() {
 
-        for (String key : keys) {
-            assertTrue(key.startsWith("luckperms."), "key " + key + " should start with 'luckperms.'");
-        }
+    }
+
+    @Override
+    public void loadDependencies(Set<Dependency> dependencies) {
+        // no-op
+    }
+
+    @Override
+    public void loadStorageDependencies(Set<StorageType> storageTypes, boolean redis, boolean rabbitmq, boolean nats) {
+        // no-op
+    }
+
+    @Override
+    public ClassLoader obtainClassLoaderWith(Set<Dependency> dependencies) {
+        return NoopDependencyManager.class.getClassLoader();
+    }
+
+    @Override
+    public void close() {
+        // no-op
     }
 
 }

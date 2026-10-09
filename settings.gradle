@@ -17,6 +17,14 @@ plugins {
 }
 
 rootProject.name = 'luckperms'
+include 'minestom'
+
+// Build the embedded library without configuring unrelated server platforms.
+if (providers.gradleProperty('minestomOnly').isPresent()) {
+    include 'api', 'common', 'common:loader-utils'
+    return
+}
+
 include (
         'api',
         'common',
