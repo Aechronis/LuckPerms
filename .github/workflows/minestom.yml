@@ -2,9 +2,9 @@ name: Minestom
 
 on:
   push:
-    branches: [minestom]
+    branches: [master]
   pull_request:
-    branches: [minestom]
+    branches: [master]
   workflow_dispatch:
 
 permissions:

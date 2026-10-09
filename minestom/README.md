@@ -1,7 +1,7 @@
 # LuckPerms for Minestom
 
 An embedded LuckPerms library for **Minestom `2026.10.05-26.2`**, Minecraft 26.2,
-and Java 25. The `minestom` branch follows upstream LuckPerms and preserves the
+and Java 25. The `master` branch follows upstream LuckPerms and preserves the
 builder, configuration, command registration, and context provider APIs from
 [Javaniac's Minestom fork](https://codeberg.org/Javaniac/LuckPerms).
 
@@ -96,5 +96,5 @@ Other upstream platforms remain in the repository. `-PminestomOnly` selects the
 small project set needed for this library; omit it for the upstream project set.
 
 To bring in upstream changes, merge `LuckPerms/LuckPerms`'s `master` into this
-fork's `minestom` branch and rerun the build above. Integration checks run against
+fork's `master` branch and rerun the build above. Integration checks run against
 both the normal classpath and the packaged jar with the target Minestom version.
